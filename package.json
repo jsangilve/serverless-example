@@ -10,6 +10,7 @@
     "@types/node": "~12.12.47",
     "@typescript-eslint/eslint-plugin": "~3.2.0",
     "@typescript-eslint/parser": "~3.2.0",
+    "@types/aws-lambda": "^8.10.56",
     "eslint": "~7.2.0",
     "eslint-config-prettier": "~6.11.0",
     "eslint-plugin-jest": "~23.13.2",
@@ -31,6 +32,8 @@
   "author": "Jose San Gil <jsangilve@gmail.com>",
   "license": "Apache-2.0",
   "dependencies": {
-    "tslib": "~2.0.0"
+    "tslib": "~2.0.0",
+    "aws-lambda": "^1.0.6",
+    "aws-sdk": "^2.703.0"
   }
 }
