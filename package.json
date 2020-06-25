@@ -11,6 +11,7 @@
     "@typescript-eslint/eslint-plugin": "~3.2.0",
     "@typescript-eslint/parser": "~3.2.0",
     "@types/aws-lambda": "^8.10.56",
+    "@types/busboy": "^0.2.3",
     "eslint": "~7.2.0",
     "eslint-config-prettier": "~6.11.0",
     "eslint-plugin-jest": "~23.13.2",
@@ -34,6 +35,7 @@
   "dependencies": {
     "tslib": "~2.0.0",
     "aws-lambda": "^1.0.6",
-    "aws-sdk": "^2.703.0"
+    "aws-sdk": "^2.703.0",
+    "busboy": "^0.3.1"
   }
 }
