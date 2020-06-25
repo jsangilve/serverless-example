@@ -1,13 +1,13 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
 import queryString from 'querystring';
-import Busboy from 'busboy';
+import * as Busboy from 'busboy';
 
 interface UploadedFile {
   filename: string;
   contentType: string;
   encoding: string;
-  chunks: (Buffer | string)[];
+  content: any;
 }
 
 interface FormData {
@@ -19,17 +19,23 @@ const s3Client = new S3();
 
 const BUCKET_NAME = 'serverless-example-bucket';
 
-const parseFormData = async (event: APIGatewayProxyEvent): Promise<UploadedFile> =>
+const parseFormData = async (
+  event: APIGatewayProxyEvent,
+): Promise<UploadedFile> =>
   new Promise((resolve, reject) => {
-    const busboy = new Busboy({ headers: event.headers['content-type'] });
+    const busboy = new Busboy({
+      headers: { 'content-type': event.headers['content-type'] },
+    });
     const fields: Record<string, any> = {};
     let uploadedFile: UploadedFile;
-    busboy.on('file', (field, file, filename, encoding, mimetype) => {
-      const chunks = [];
-      
+
+    // event listener for the form data
+    busboy.on('file', (field, file, filename, encoding, contentType) => {
+      let content = null;
+
       file.on('data', (data) => {
         console.info('typeof chunk', typeof data);
-        chunks.push(data);
+        content = data;
       });
 
       file.on('error', () => {
@@ -37,13 +43,13 @@ const parseFormData = async (event: APIGatewayProxyEvent): Promise<UploadedFile>
       });
 
       file.on('end', () => {
-        console.log('File readed');
+        console.log('File read');
         uploadedFile = {
           filename,
           encoding,
-          contentType: mimetype,
-          chunks,
-        }
+          contentType,
+          content,
+        };
       });
     });
 
@@ -59,16 +65,16 @@ const parseFormData = async (event: APIGatewayProxyEvent): Promise<UploadedFile>
       }
       resolve(uploadedFile);
     });
-    
+
     busboy.write(event.body, event.isBase64Encoded ? 'base64' : 'binary');
-    busboy.end()
+    busboy.end();
   });
 
 export const uploadFile: APIGatewayProxyHandler = async (event) => {
   console.info('Uploading a new file to AWS', event);
   const uploadedFile = await parseFormData(event);
-  console.log(uploadedFile.filename, 'Chunks', uploadedFile.chunks.length);
-  const tags = {};
+  console.log(uploadedFile.filename, uploadedFile.encoding);
+  const tags = { filename: uploadedFile.filename };
   const result = await s3Client
     .putObject({
       Bucket: BUCKET_NAME,
