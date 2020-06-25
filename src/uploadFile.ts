@@ -19,6 +19,9 @@ const s3Client = new S3();
 
 const BUCKET_NAME = 'serverless-example-bucket';
 
+/** 
+ * Parses the multipart form data and returns the uploaded files and fields
+ */
 const parseFormData = async (
   event: APIGatewayProxyEvent,
 ): Promise<UploadedFile> =>
@@ -34,7 +37,6 @@ const parseFormData = async (
       let content = null;
 
       file.on('data', (data) => {
-        console.info('typeof chunk', typeof data);
         content = data;
       });
 
@@ -43,7 +45,6 @@ const parseFormData = async (
       });
 
       file.on('end', () => {
-        console.log('File read');
         uploadedFile = {
           filename,
           encoding,
