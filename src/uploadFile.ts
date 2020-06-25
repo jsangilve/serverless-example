@@ -1,6 +1,6 @@
 import { APIGatewayProxyHandler, APIGatewayProxyEvent } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
-import queryString from 'querystring';
+import * as queryString from 'querystring';
 import * as Busboy from 'busboy';
 
 interface UploadedFile {
