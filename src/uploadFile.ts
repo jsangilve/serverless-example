@@ -7,7 +7,7 @@ interface UploadedFile {
   filename: string;
   contentType: string;
   encoding: string;
-  content: any;
+  content: Buffer | string;
 }
 
 interface FormData {
@@ -24,7 +24,7 @@ const BUCKET_NAME = 'serverless-example-bucket';
  */
 const parseFormData = async (
   event: APIGatewayProxyEvent,
-): Promise<UploadedFile> =>
+): Promise<FormData> =>
   new Promise((resolve, reject) => {
     const busboy = new Busboy({
       headers: { 'content-type': event.headers['content-type'] },
@@ -37,12 +37,11 @@ const parseFormData = async (
       let content = null;
 
       file.on('data', (data) => {
+        // reads the file content in one chunk
         content = data;
       });
 
-      file.on('error', () => {
-        // TODO reject promise and return error
-      });
+      file.on('error', reject);
 
       file.on('end', () => {
         uploadedFile = {
@@ -58,13 +57,13 @@ const parseFormData = async (
       fields[fieldName] = value;
     });
 
-    busboy.on('error', (error) => reject(error));
+    busboy.on('error', reject);
 
     busboy.on('finish', () => {
       if (!uploadedFile) {
-        reject(new Error('missing file'));
+        reject(new Error('Missing file'));
       }
-      resolve(uploadedFile);
+      resolve({ file: uploadedFile, fields })
     });
 
     busboy.write(event.body, event.isBase64Encoded ? 'base64' : 'binary');
@@ -72,24 +71,27 @@ const parseFormData = async (
   });
 
 export const uploadFile: APIGatewayProxyHandler = async (event) => {
-  console.info('Uploading a new file to AWS', event);
-  const uploadedFile = await parseFormData(event);
-  console.log(uploadedFile.filename, uploadedFile.encoding);
-  const tags = { filename: uploadedFile.filename };
-  const result = await s3Client
-    .putObject({
-      Bucket: BUCKET_NAME,
-      Key: 'the_filename',
-      Body: 'content of the file',
-      Tagging: queryString.encode(tags),
-    })
-    .promise();
+  const { file, fields } = await parseFormData(event);
+  const tags = { filename: file.filename };
+  try {
+    await s3Client
+      .putObject({
+        Bucket: BUCKET_NAME,
+        Key: fields.filename || file.filename,
+        Body: file.content,
+        Tagging: queryString.encode(tags),
+      })
+      .promise();
 
-  console.info('PutOperationResult', result);
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ description: 'file created', result: 'ok' }),
+    };
 
-  // the file content is provided
-  return {
-    statusCode: 200,
-    body: JSON.stringify({ description: 'file created', result: 'ok' }),
-  };
+  } catch (_error) {
+    // this is deficient error handling, but good enough for the purpose of this example
+    return {
+      statusCode: 409, body: JSON.stringify({ description: 'something went wrong' })
+    }
+  }
 };
