@@ -22,12 +22,29 @@ package:
     - build/**
 
 functions:
+  # option 1
   uploadFile:
     handler: build.uploadFile
     events:
       - http:
           method: post
           path: upload
+          cors: true
+  # option 2: pre-signed URL
+  createUploadUrl:
+    handler: build.createUploadUrl
+    events: 
+      - http: 
+          method: post
+          path: createUploadUrl
+          cors: true
+  # option 3: post-signed URL
+  createPostUploadUrl:
+    handler: build.createPostUploadUrl
+    events: 
+      - http: 
+          method: get
+          path: createPostUploadUrl
           cors: true
 
 # you can add CloudFormation resource templates here

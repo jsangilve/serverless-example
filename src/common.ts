@@ -2,6 +2,9 @@
 import * as Busboy from 'busboy';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 
+// TODO: load from env variables
+export const BUCKET_NAME = 'serverless-example-bucket';
+
 export interface UploadedFile {
   filename: string;
   contentType: string;
@@ -10,7 +13,7 @@ export interface UploadedFile {
 }
 
 export interface FormData {
-  file: UploadedFile;
+  file?: UploadedFile;
   fields: Record<string, any>;
 }
 
@@ -29,7 +32,7 @@ export const parseFormData = async (
 
     // event listener for the form data
     busboy.on('file', (field, file, filename, encoding, contentType) => {
-      let content = null;
+      let content = '';
 
       file.on('data', (data) => {
         // reads the file content in one chunk
@@ -55,12 +58,9 @@ export const parseFormData = async (
     busboy.on('error', reject);
 
     busboy.on('finish', () => {
-      if (!uploadedFile) {
-        reject(new Error('Missing file'));
-      }
       resolve({ file: uploadedFile, fields })
     });
 
-    busboy.write(event.body, event.isBase64Encoded ? 'base64' : 'binary');
+    busboy.write(event.body || '', event.isBase64Encoded ? 'base64' : 'binary');
     busboy.end();
   });
