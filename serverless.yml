@@ -22,7 +22,7 @@ package:
     - build/**
 
 functions:
-  # option 1
+  # option 1: sync upload
   uploadFile:
     handler: build.uploadFile
     events:
@@ -43,11 +43,10 @@ functions:
     handler: build.createPostUploadUrl
     events: 
       - http: 
-          method: get
+          method: post
           path: createPostUploadUrl
           cors: true
 
-# you can add CloudFormation resource templates here
 resources:
   Resources:
     MyServerlessExampleBucket:
