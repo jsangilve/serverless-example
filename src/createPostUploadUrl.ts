@@ -4,10 +4,6 @@ import { BUCKET_NAME, getUploadParameters } from './common';
 
 const s3Client = new S3();
 
-
-
-
-
 /**
  * Given a set of tags, produces the required XML tagging format as string
  */
