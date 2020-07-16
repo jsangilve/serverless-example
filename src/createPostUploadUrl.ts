@@ -1,34 +1,19 @@
 import { APIGatewayProxyHandler } from 'aws-lambda';
 import { S3 } from 'aws-sdk';
-import { BUCKET_NAME } from './common';
+import { BUCKET_NAME, getUploadParameters } from './common';
 
 const s3Client = new S3();
 
-interface POSTParameters {
-  filename: string;
-  tags?: Record<string, string>;
-}
 
-const getPOSTParameters = (
-  rawBody: Record<string, any> | null,
-): POSTParameters => {
-  if (!rawBody || !(typeof rawBody.filename === 'string')) {
-    throw new Error('Missing filename parameters');
-  }
 
-  return {
-    filename: rawBody.filename,
-    tags: rawBody.tags,
-  };
-};
+
 
 /**
  * Given a set of tags, produces the required XML tagging format as string
  */
 export const buildXMLTagSet = (tagset: Record<string, string>): string => {
   const tags = Object.entries(tagset).reduce(
-    (acc, [key, value]) =>
-      `${acc}<Tag><Key>${key}</Key><Value>${value}</Value></Tag>`,
+    (acc, [key, value]) => `${acc}<Tag><Key>${key}</Key><Value>${value}</Value></Tag>`,
     '',
   );
 
@@ -39,7 +24,7 @@ export const createPostUploadUrl: APIGatewayProxyHandler = async (event) => {
   try {
     // expects body to be a JSON containing the required parameters
     const body = JSON.parse(event.body || '');
-    const { filename, tags } = getPOSTParameters(body);
+    const { filename, tags } = getUploadParameters(body);
 
     const postObj = s3Client.createPresignedPost({
       Bucket: BUCKET_NAME,
@@ -57,14 +42,12 @@ export const createPostUploadUrl: APIGatewayProxyHandler = async (event) => {
         url: postObj.url,
         fields: {
           ...postObj.fields,
-          // enrich post object with the tagging values
+          // augment post object with the tagging values
           tagging: tags ? buildXMLTagSet(tags) : undefined,
         },
       }),
     };
   } catch (error) {
-    console.log(error);
-
     return {
       statusCode: 409,
       body: JSON.stringify({ description: 'something went wrong' }),

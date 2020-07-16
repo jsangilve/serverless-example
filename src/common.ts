@@ -1,4 +1,3 @@
-
 import * as Busboy from 'busboy';
 import { APIGatewayProxyEvent } from 'aws-lambda';
 
@@ -17,12 +16,10 @@ export interface FormData {
   fields: Record<string, any>;
 }
 
-/** 
+/**
  * Parses the multipart form data and returns the uploaded files and fields
  */
-export const parseFormData = async (
-  event: APIGatewayProxyEvent,
-): Promise<FormData> =>
+export const parseFormData = async (event: APIGatewayProxyEvent): Promise<FormData> =>
   new Promise((resolve, reject) => {
     const busboy = new Busboy({
       headers: { 'content-type': event.headers['content-type'] },
@@ -58,9 +55,25 @@ export const parseFormData = async (
     busboy.on('error', reject);
 
     busboy.on('finish', () => {
-      resolve({ file: uploadedFile, fields })
+      resolve({ file: uploadedFile, fields });
     });
 
     busboy.write(event.body || '', event.isBase64Encoded ? 'base64' : 'binary');
     busboy.end();
   });
+
+export interface POSTParameters {
+  filename: string;
+  tags?: Record<string, string>;
+}
+
+export const getUploadParameters = (rawBody: Record<string, any> | null): POSTParameters => {
+  if (!rawBody || !(typeof rawBody.filename === 'string')) {
+    throw new Error('Missing filename parameters');
+  }
+
+  return {
+    filename: rawBody.filename,
+    tags: rawBody.tags,
+  };
+};
