@@ -43,7 +43,7 @@ export const createPostUploadUrl: APIGatewayProxyHandler = async (event) => {
 
     const postObj = s3Client.createPresignedPost({
       Bucket: BUCKET_NAME,
-      Expires: 30, // expiration in seconds
+      Expires: 240, // expiration in seconds
       // matches any value for tagging
       Conditions: tags && [['starts-with', '$tagging', '']],
       Fields: {
