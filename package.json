@@ -39,7 +39,7 @@
   "dependencies": {
     "tslib": "~2.0.0",
     "aws-lambda": "^1.0.6",
-    "aws-sdk": "^2.703.0",
+    "aws-sdk": "^2.814.0",
     "busboy": "^0.3.1"
   }
 }
